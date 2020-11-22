@@ -14,11 +14,6 @@ namespace ReinforcementLearningTicTacToe
 
         private Player _playerTurn;
 
-        private int _xWins;
-        private int _oWins;
-        private int _tieWins;
-        private int _totalWins;
-
         public Game(Player player1, Player player2)
         {
             _player1 = player1;
@@ -29,11 +24,6 @@ namespace ReinforcementLearningTicTacToe
             _turn = 'X';
 
             _playerTurn = _player1;
-
-            _xWins = 0;
-            _oWins = 0;
-            _tieWins = 0;
-            _totalWins = 0;
         }
 
         public void PlayGame()
@@ -126,24 +116,6 @@ namespace ReinforcementLearningTicTacToe
             }
 
             return 'U';
-        }
-
-        private void UpdateWinnerStats(char winner)
-        {
-            switch (_winner)
-            {
-                case 'X':
-                    _xWins++;
-                    break;
-                case 'O':
-                    _oWins++;
-                    break;
-                case 'T':
-                    _tieWins++;
-                    break;
-                default:
-                    break; // Game isn't over yet.
-            }
         }
 
         private void ResetGame()
