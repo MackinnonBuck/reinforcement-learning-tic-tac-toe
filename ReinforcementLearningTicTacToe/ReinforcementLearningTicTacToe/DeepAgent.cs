@@ -1,5 +1,4 @@
-﻿using Keras;
-using Keras.Layers;
+﻿using Keras.Layers;
 using Keras.Models;
 using Numpy;
 using System;
@@ -14,8 +13,10 @@ namespace ReinforcementLearningTicTacToe
         private readonly float _alpha = 0.5f;
         private readonly BaseModel _model;
         private readonly float _expFactor;
+        private readonly char _opponentTag;
 
-        private char _opponentTag;
+        private readonly Random _random = new Random();
+
         private string _state;
         private string _prevState;
 
@@ -55,6 +56,7 @@ namespace ReinforcementLearningTicTacToe
         public void SaveModel()
         {
             _model.Save(ModelFileName, true);
+            Console.WriteLine("-------- Model has been saved! --------");
         }
 
         public override string MakeMove(string state, char winner, bool learn)
@@ -71,9 +73,7 @@ namespace ReinforcementLearningTicTacToe
                 return _state;
             }
 
-            var p = np.random.uniform(
-                new NDarray<float>(new[] { 0 }),
-                new NDarray<float>(new[] { 1 }));
+            var p = (float)_random.NextDouble();
 
             string newState;
 
@@ -88,7 +88,7 @@ namespace ReinforcementLearningTicTacToe
                     .Select(c => c.ToString())
                     .ToArray();
 
-                var idx = np.random.choice(np.array(moves)).ToString()[0];
+                var idx = moves[_random.Next(0, moves.Length)][0];
                 newState = state.Replace(idx, Tag);
             }
 
@@ -112,10 +112,9 @@ namespace ReinforcementLearningTicTacToe
 
             foreach (var move in moves)
             {
-                var predictions = np.zeros(9, 1);
+                var predictions = new List<float[]>();
                 var tempState = state.Replace(move, Tag);
 
-                // TODO: Own func?
                 var opponentMoves = tempState
                     .Where(c => int.TryParse(c.ToString(), out var _))
                     .ToArray();
@@ -124,17 +123,17 @@ namespace ReinforcementLearningTicTacToe
                 {
                     var tempStateOpponent = tempState.Replace(opponentMove, _opponentTag);
                     var prediction = Predict(tempStateOpponent);
-                    predictions = np.append(predictions, prediction, axis: 1);
+                    predictions.Add(prediction.GetData<float>());
                 }
 
-                var vTemp = predictions.len == 0 ? 1.0f : (float)np.min(predictions);
+                var vTemp = predictions.Count == 0 ? 1.0f : predictions.SelectMany(p => p).Min();
 
                 if (vTemp > v)
                 {
                     tempStateList = new List<string> { tempState };
                     v = vTemp;
                 }
-                else
+                else if (vTemp == v)
                 {
                     tempStateList.Add(tempState);
                 }
@@ -145,7 +144,7 @@ namespace ReinforcementLearningTicTacToe
                 throw new InvalidOperationException("Oh no! The temp state was empty.");
             }
 
-            return np.random.choice(np.array(tempStateList.ToArray())).ToString();
+            return tempStateList[_random.Next(0, tempStateList.Count)];
         }
 
         private void Learn(string state, char winner)
@@ -162,17 +161,17 @@ namespace ReinforcementLearningTicTacToe
             if (state.Contains(Tag))
             {
                 var vs = Predict(_prevState);
-                var r = CalcualteReward(winner);
+                var r = CalculateReward(winner);
 
                 var vsTag = winner == 'U' ? Predict(state) : new NDarray<int>(new[] { 0 });
 
                 return np.array(vs + _alpha * (r + vsTag - vs));
             }
 
-            return null; // TODO: Is this a problem?
+            return null;
         }
 
-        private float CalcualteReward(char winner)
+        private float CalculateReward(char winner)
         {
             if (winner == Tag)
             {
