@@ -28,17 +28,19 @@ namespace ReinforcementLearningTicTacToe
 
         public void PlayGame()
         {
+            // 1
             while (_winner == 'U')
             {
+                // 2
                 if ( _playerTurn is HumanPlayer)
                 {
                     PrintGame();
                 }
+
+                // 3
                 _state = PlayMove(false);
                 _winner = FindWinner();
             }
-
-            UpdateWinnerStats(_winner);
             PrintGame();
         }
 
@@ -51,9 +53,7 @@ namespace ReinforcementLearningTicTacToe
             Console.WriteLine($"{_state[6]} | {_state[7]} | {_state[8]}\n");
         }
 
-        public void PlayToLearn(int episodes)
-        {
-        }
+        public void PlayToLearn(int episodes) { }
 
         private string PlayMove(bool learn)
         {
