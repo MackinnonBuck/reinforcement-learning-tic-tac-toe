@@ -5,9 +5,6 @@ namespace ReinforcementLearningTicTacToe
 {
     internal class Game
     {
-        //private readonly DeepAgent _player1;
-        //private readonly DeepAgent _player2;
-
         private readonly Player _player1;
         private readonly Player _player2;
 
@@ -15,20 +12,10 @@ namespace ReinforcementLearningTicTacToe
         private char _winner;
         private char _turn;
 
-        //private DeepAgent _playerTurn;
-
         private Player _playerTurn;
-
-        private int _xWins;
-        private int _oWins;
-        private int _tieWins;
-        private int _totalWins;
 
         public Game(Player player1, Player player2)
         {
-            //_player1 = new DeepAgent('X', expFactor1);
-            //_player2 = new DeepAgent('O', expFactor2);
-
             _player1 = player1;
             _player2 = player2;
 
@@ -37,29 +24,7 @@ namespace ReinforcementLearningTicTacToe
             _turn = 'X';
 
             _playerTurn = _player1;
-
-            _xWins = 0;
-            _oWins = 0;
-            _tieWins = 0;
-            _totalWins = 0;
         }
-
-        //public Game(float expFactor1, float expFactor2)
-        //{
-        //    _player1 = new DeepAgent('X', expFactor1);
-        //    _player2 = new DeepAgent('O', expFactor2);
-
-        //    _state = "123456789";
-        //    _winner = 'U';
-        //    _turn = 'X';
-
-        //    _playerTurn = _player1;
-
-        //    _xWins = 0;
-        //    _oWins = 0;
-        //    _tieWins = 0;
-        //    _totalWins = 0;
-        //}
 
         public void PlayGame()
         {
@@ -69,11 +34,11 @@ namespace ReinforcementLearningTicTacToe
                 {
                     PrintGame();
                 }
+
                 _state = PlayMove(false);
                 _winner = FindWinner();
             }
 
-            UpdateWinnerStats(_winner);
             PrintGame();
         }
 
@@ -96,22 +61,23 @@ namespace ReinforcementLearningTicTacToe
                     _winner = FindWinner();
                 }
 
-                UpdateWinnerStats(_winner); 
-
-                // TODO: Why 4 times? (see line 69 in python version).
                 _state = PlayMove(learn: true);
                 _state = PlayMove(learn: true);
                 _state = PlayMove(learn: true);
                 _state = PlayMove(learn: true);
 
-                // TODO: Every 500 iterations, print game stats.
-
-                if (i % 2000 == 0)
+                if (i % 10 == 0)
                 {
-                    _xWins = _oWins = _tieWins = 0;
-                }
+                    if (_player1 is DeepAgent deepAgent1)
+                    {
+                        deepAgent1.SaveModel();
+                    }
 
-                _totalWins = i;
+                    if (_player2 is DeepAgent deepAgent2)
+                    {
+                        deepAgent2.SaveModel();
+                    }
+                }
 
                 ResetGame();
             }
@@ -119,8 +85,6 @@ namespace ReinforcementLearningTicTacToe
 
         private string PlayMove(bool learn)
         {
-            //DeepAgent currentPlayer;
-            //DeepAgent nextPlayer;
             char nextTurn;
             Player currentPlayer;
             Player nextPlayer;
@@ -180,24 +144,6 @@ namespace ReinforcementLearningTicTacToe
             }
 
             return 'U';
-        }
-
-        private void UpdateWinnerStats(char winner)
-        {
-            switch (_winner)
-            {
-                case 'X':
-                    _xWins++;
-                    break;
-                case 'O':
-                    _oWins++;
-                    break;
-                case 'T':
-                    _tieWins++;
-                    break;
-                default:
-                    break; // Game isn't over yet.
-            }
         }
 
         private void ResetGame()
