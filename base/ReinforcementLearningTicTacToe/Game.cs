@@ -28,16 +28,13 @@ namespace ReinforcementLearningTicTacToe
 
         public void PlayGame()
         {
-            // 1
             while (_winner == 'U')
             {
-                // 2
                 if ( _playerTurn is HumanPlayer)
                 {
                     PrintGame();
                 }
 
-                // 3
                 _state = PlayMove(false);
                 _winner = FindWinner();
             }
