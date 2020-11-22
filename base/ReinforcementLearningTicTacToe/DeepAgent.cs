@@ -74,7 +74,7 @@ namespace ReinforcementLearningTicTacToe
 
         private void Learn(string state, char winner)
         {
-            
+
         }
 
         private NDarray CalculateTarget(string state, char winner)
@@ -108,8 +108,7 @@ namespace ReinforcementLearningTicTacToe
 
         private NDarray Predict(string state)
         {
-            var stateArray = GetStateArray(state);
-            return _model.Predict(stateArray);
+            return null;
         }
 
         private void Train(NDarray target, int epochs)
