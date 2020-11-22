@@ -5,17 +5,12 @@ namespace ReinforcementLearningTicTacToe
 {
     internal class Game
     {
-        //private readonly DeepAgent _player1;
-        //private readonly DeepAgent _player2;
-
         private readonly Player _player1;
         private readonly Player _player2;
 
         private string _state;
         private char _winner;
         private char _turn;
-
-        //private DeepAgent _playerTurn;
 
         private Player _playerTurn;
 
@@ -26,9 +21,6 @@ namespace ReinforcementLearningTicTacToe
 
         public Game(Player player1, Player player2)
         {
-            //_player1 = new DeepAgent('X', expFactor1);
-            //_player2 = new DeepAgent('O', expFactor2);
-
             _player1 = player1;
             _player2 = player2;
 
@@ -43,23 +35,6 @@ namespace ReinforcementLearningTicTacToe
             _tieWins = 0;
             _totalWins = 0;
         }
-
-        //public Game(float expFactor1, float expFactor2)
-        //{
-        //    _player1 = new DeepAgent('X', expFactor1);
-        //    _player2 = new DeepAgent('O', expFactor2);
-
-        //    _state = "123456789";
-        //    _winner = 'U';
-        //    _turn = 'X';
-
-        //    _playerTurn = _player1;
-
-        //    _xWins = 0;
-        //    _oWins = 0;
-        //    _tieWins = 0;
-        //    _totalWins = 0;
-        //}
 
         public void PlayGame()
         {
@@ -88,39 +63,10 @@ namespace ReinforcementLearningTicTacToe
 
         public void PlayToLearn(int episodes)
         {
-            for (int i = 0; i < episodes; i++)
-            {
-                while (_winner == 'U')
-                {
-                    _state = PlayMove(learn: true);
-                    _winner = FindWinner();
-                }
-
-                UpdateWinnerStats(_winner); 
-
-                // TODO: Why 4 times? (see line 69 in python version).
-                _state = PlayMove(learn: true);
-                _state = PlayMove(learn: true);
-                _state = PlayMove(learn: true);
-                _state = PlayMove(learn: true);
-
-                // TODO: Every 500 iterations, print game stats.
-
-                if (i % 2000 == 0)
-                {
-                    _xWins = _oWins = _tieWins = 0;
-                }
-
-                _totalWins = i;
-
-                ResetGame();
-            }
         }
 
         private string PlayMove(bool learn)
         {
-            //DeepAgent currentPlayer;
-            //DeepAgent nextPlayer;
             char nextTurn;
             Player currentPlayer;
             Player nextPlayer;
