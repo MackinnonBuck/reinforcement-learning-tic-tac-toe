@@ -1,33 +1,32 @@
-﻿using Keras.Layers;
+﻿using Keras;
+using Keras.Layers;
 using Keras.Models;
 using Numpy;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace ReinforcementLearningTicTacToe
 {
-    internal class DeepAgent
+    internal class DeepAgent : Player
     {
         private readonly float _alpha = 0.5f;
-        private readonly Sequential _model = new Sequential();
+        private readonly BaseModel _model;
         private readonly float _expFactor;
 
-        private char _tag;
         private char _opponentTag;
         private string _state;
         private string _prevState;
 
-        public DeepAgent(char tag, float expFactor)
+        private string ModelFileName => $"model_values{Tag}.h5";
+
+        public DeepAgent(char tag, float expFactor) : base(tag)
         {
-            _tag = tag;
             _opponentTag = tag == 'X' ? 'O' : 'X';
             _expFactor = expFactor;
 
-            _model.Add(new Dense(18, activation: "relu", input_dim: 9));
-            _model.Add(new Dense(18, activation: "relu"));
-            _model.Add(new Dense(1, activation: "linear"));
-            _model.Compile(optimizer: "adam", loss: "mean_absolute_error", metrics: new[] { "accuracy" });
+            _model = LoadModel();
 
             _model.Summary();
 
@@ -35,8 +34,36 @@ namespace ReinforcementLearningTicTacToe
             _prevState = "123456789";
         }
 
-        public string MakeMove(string state, char winner)
+        private BaseModel LoadModel()
         {
+            string fileName = ModelFileName;
+
+            if (File.Exists(fileName))
+            {
+                return BaseModel.LoadModel(fileName);
+            }
+
+            var model = new Sequential();
+            model.Add(new Dense(18, activation: "relu", input_dim: 9, input_shape: 1));
+            model.Add(new Dense(18, activation: "relu"));
+            model.Add(new Dense(1, activation: "linear"));
+            model.Compile(optimizer: "adam", loss: "mean_absolute_error", metrics: new[] { "accuracy" });
+
+            return model;
+        }
+
+        public void SaveModel()
+        {
+            _model.Save(ModelFileName, true);
+        }
+
+        public override string MakeMove(string state, char winner, bool learn)
+        {
+            if (learn)
+            {
+                Learn(state, winner);
+            }
+
             _state = state;
 
             if (winner != 'U')
@@ -50,7 +77,7 @@ namespace ReinforcementLearningTicTacToe
 
             string newState;
 
-            if (p.GetData<float>()[0] < _expFactor) // TODO: Use C# random instead?????
+            if ((float)p < _expFactor)
             {
                 newState = MakeOptimalMove(state);
             }
@@ -58,19 +85,14 @@ namespace ReinforcementLearningTicTacToe
             {
                 var moves = state
                     .Where(c => int.TryParse(c.ToString(), out var _))
+                    .Select(c => c.ToString())
                     .ToArray();
 
-                var idx = np.random.choice(new NDarray<char>(moves.ToArray())).GetData<char>()[0];
-                newState = state.Replace(idx, _tag);
+                var idx = np.random.choice(np.array(moves)).ToString()[0];
+                newState = state.Replace(idx, Tag);
             }
 
             return newState;
-        }
-
-        public string MakeMoveAndLearn(string state, char winner)
-        {
-            Learn(state, winner);
-            return MakeMove(state, winner);
         }
 
         private string MakeOptimalMove(string state)
@@ -82,7 +104,7 @@ namespace ReinforcementLearningTicTacToe
             if (moves.Length == 1)
             {
                 var move = moves[0];
-                return state.Replace(move, _tag);
+                return state.Replace(move, Tag);
             }
 
             var tempStateList = new List<string>();
@@ -90,9 +112,8 @@ namespace ReinforcementLearningTicTacToe
 
             foreach (var move in moves)
             {
-                //var predictions = new List<NDarray>();
-                var predictions = new NDarray<float>(new float[] { });
-                var tempState = state.Replace(move, _tag);
+                var predictions = np.zeros(9, 1);
+                var tempState = state.Replace(move, Tag);
 
                 // TODO: Own func?
                 var opponentMoves = tempState
@@ -102,12 +123,11 @@ namespace ReinforcementLearningTicTacToe
                 foreach (var opponentMove in opponentMoves)
                 {
                     var tempStateOpponent = tempState.Replace(opponentMove, _opponentTag);
-                    predictions.append(Predict(tempStateOpponent));
+                    var prediction = Predict(tempStateOpponent);
+                    predictions = np.append(predictions, prediction, axis: 1);
                 }
 
-                //predictions = predictions.Where(v => !(v is null)).ToList(); // TODO: Necessary?
-
-                var vTemp = predictions.len == 0 ? 1.0f : np.min(predictions).GetData<float>()[0];
+                var vTemp = predictions.len == 0 ? 1.0f : (float)np.min(predictions);
 
                 if (vTemp > v)
                 {
@@ -125,7 +145,7 @@ namespace ReinforcementLearningTicTacToe
                 throw new InvalidOperationException("Oh no! The temp state was empty.");
             }
 
-            return np.random.choice(new NDarray<string>(tempStateList.ToArray())).GetData<string>()[0];
+            return np.random.choice(np.array(tempStateList.ToArray())).ToString();
         }
 
         private void Learn(string state, char winner)
@@ -139,7 +159,7 @@ namespace ReinforcementLearningTicTacToe
 
         private NDarray CalculateTarget(string state, char winner)
         {
-            if (state.Contains(_tag))
+            if (state.Contains(Tag))
             {
                 var vs = Predict(_prevState);
                 var r = CalcualteReward(winner);
@@ -154,7 +174,7 @@ namespace ReinforcementLearningTicTacToe
 
         private float CalcualteReward(char winner)
         {
-            if (winner == _tag)
+            if (winner == Tag)
             {
                 return 1;
             }
@@ -168,7 +188,7 @@ namespace ReinforcementLearningTicTacToe
         }
 
         private NDarray<int> GetStateArray(string state) =>
-            new NDarray<int>(state.Select(c => c switch
+            np.array(state.Select(c => c switch
                 {
                     'X' => 1,
                     'O' => -1,
@@ -176,8 +196,11 @@ namespace ReinforcementLearningTicTacToe
                 })
                 .ToArray());
 
-        private NDarray Predict(string state) =>
-            _model.Predict(GetStateArray(state));
+        private NDarray Predict(string state)
+        {
+            var stateArray = GetStateArray(state);
+            return _model.Predict(stateArray);
+        }
 
         private void Train(NDarray target, int epochs)
         {
