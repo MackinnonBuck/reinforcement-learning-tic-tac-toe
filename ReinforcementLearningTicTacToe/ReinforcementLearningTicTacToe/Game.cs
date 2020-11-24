@@ -53,14 +53,20 @@ namespace ReinforcementLearningTicTacToe
 
         public void PlayToLearn(int episodes)
         {
-            for (int i = 0; i < episodes; i++)
+            for (int i = 0; i < episodes; i++) // Each episode is when a goal is scored
             {
-                while (_winner == 'U')
+                // If goal is not scored (or the timeout has not been hit)
+                while (_winner == 'U')  
                 {
+                    // Decision is made and state is saved every N frames
+                    // If currentFrame % N == 0 then save state and make a decision.
+                    // Store states in a ring buffer of fixed size
+                    // Still update the current skill every frame
                     _state = PlayMove(learn: true);
                     _winner = FindWinner();
                 }
 
+                // Ignore this stuff vvv
                 _state = PlayMove(learn: true);
                 _state = PlayMove(learn: true);
                 _state = PlayMove(learn: true);
@@ -78,11 +84,14 @@ namespace ReinforcementLearningTicTacToe
                         deepAgent2.SaveModel();
                     }
                 }
+                // Ignore this stuff ^^^
 
+                // This will clear previous states.
                 ResetGame();
             }
         }
 
+        // This method is replaced with the decision maker
         private string PlayMove(bool learn)
         {
             char nextTurn;
@@ -110,6 +119,7 @@ namespace ReinforcementLearningTicTacToe
             return newState;
         }
 
+        // This shouldn't exist for our bot
         private char FindWinner()
         {
             if (_state.Count(c => int.TryParse(c.ToString(), out var _)) == 0)
@@ -146,6 +156,8 @@ namespace ReinforcementLearningTicTacToe
             return 'U';
         }
 
+        // Resetting will happen automatically by the game.
+        // Unless, that is, the timeout happens, in which case we'll manually trigger a reset somehow using RLBot's API.
         private void ResetGame()
         {
             _state = "123456789";

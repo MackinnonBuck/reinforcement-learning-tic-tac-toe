@@ -35,6 +35,7 @@ namespace ReinforcementLearningTicTacToe
             _prevState = "123456789";
         }
 
+        // This logic is mostly the same
         private BaseModel LoadModel()
         {
             string fileName = ModelFileName;
@@ -44,6 +45,9 @@ namespace ReinforcementLearningTicTacToe
                 return BaseModel.LoadModel(fileName);
             }
 
+            // Use the model we've already made.
+            // input_dim will be the number of floats we're training on.
+            // input_shape should still be 1 (or 3, if we're always working with 3D vectors? but probably 1).
             var model = new Sequential();
             model.Add(new Dense(18, activation: "relu", input_dim: 9, input_shape: 1));
             model.Add(new Dense(18, activation: "relu"));
@@ -59,6 +63,8 @@ namespace ReinforcementLearningTicTacToe
             Console.WriteLine("-------- Model has been saved! --------");
         }
 
+        // This calculates the skill we want to perform.
+        // _state gets translated to skill ID.
         public override string MakeMove(string state, char winner, bool learn)
         {
             if (learn)
@@ -73,16 +79,19 @@ namespace ReinforcementLearningTicTacToe
                 return _state;
             }
 
+            // Exploration factor stays in
             var p = (float)_random.NextDouble();
 
             string newState;
 
             if ((float)p < _expFactor)
             {
+                // This logic stays about the same.
                 newState = MakeOptimalMove(state);
             }
             else
             {
+                // Just choose a random number between 0 and the max skill ID.
                 var moves = state
                     .Where(c => int.TryParse(c.ToString(), out var _))
                     .Select(c => c.ToString())
@@ -203,6 +212,10 @@ namespace ReinforcementLearningTicTacToe
 
         private void Train(NDarray target, int epochs)
         {
+            // Could this be something as simple as:
+            // var result _model.Predict(state)
+            // _model.Fit(state, result)
+
             var xTrain = GetStateArray(_prevState);
 
             if (!(target is null))
